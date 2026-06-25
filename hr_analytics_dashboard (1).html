@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Analytics Dashboard — Warisha Jamal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1117;color:#e8eaf6;min-height:100vh;padding:24px}
+.dash{max-width:1200px;margin:0 auto}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.dash-title{font-size:20px;font-weight:600;color:#e8eaf6}
+.dash-sub{font-size:12px;color:#9196b5;margin-top:3px}
+.toggle-btn{background:#242840;border:1px solid #2e3354;color:#9196b5;font-size:12px;padding:7px 16px;border-radius:20px;cursor:pointer}
+.toggle-btn:hover{border-color:#7c6af7;color:#7c6af7}
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.f-btn{font-size:12px;padding:6px 14px;border-radius:16px;border:1px solid #2e3354;background:transparent;color:#9196b5;cursor:pointer}
+.f-btn.active{background:#7c6af7;color:#fff;border-color:#7c6af7}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.mcard{background:#1e2235;border:1px solid #2e3354;border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.mcard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.mcard.c1::before{background:#7c6af7}.mcard.c2::before{background:#5dcaa5}
+.mcard.c3::before{background:#f97b6b}.mcard.c4::before{background:#f4c775}
+.mlabel{font-size:11px;color:#9196b5;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.mval{font-size:26px;font-weight:600;color:#e8eaf6}
+.mdelta{font-size:11px;margin-top:6px}
+.green{color:#5dcaa5}.red{color:#f97b6b}.yellow{color:#f4c775}
+.charts-row{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-bottom:12px}
+.charts-row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.ccard{background:#1e2235;border:1px solid #2e3354;border-radius:12px;padding:16px}
+.ccard-full{background:#1e2235;border:1px solid #2e3354;border-radius:12px;padding:16px;margin-bottom:12px}
+.ctitle{font-size:13px;font-weight:600;color:#e8eaf6;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.ctag{font-size:10px;padding:2px 8px;border-radius:8px;background:#242840;color:#9196b5}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#9196b5}
+.legdot{width:8px;height:8px;border-radius:2px}
+.htable{width:100%;border-collapse:collapse;font-size:12px}
+.htable th{text-align:left;padding:8px 10px;color:#9196b5;font-weight:400;border-bottom:1px solid #2e3354;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.htable td{padding:9px 10px;color:#e8eaf6;border-bottom:1px solid #2e3354}
+.htable tr:last-child td{border-bottom:none}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500}
+.badge.active{background:rgba(93,202,165,.15);color:#5dcaa5}
+.badge.leave{background:rgba(249,123,107,.15);color:#f97b6b}
+.badge.remote{background:rgba(124,106,247,.15);color:#7c6af7}
+.pbar-wrap{height:5px;background:#242840;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;width:70px}
+.pbar-fill{height:100%;border-radius:3px}
+/* Light mode */
+body.light{background:#f4f5fb;color:#1a1d35}
+body.light .dash-title{color:#1a1d35}
+body.light .mcard{background:#fff;border-color:#d4d8f0}
+body.light .mlabel{color:#5c6080}
+body.light .mval{color:#1a1d35}
+body.light .ccard,.ccard-full{background:#fff;border-color:#d4d8f0}
+body.light .ccard-full{background:#fff;border-color:#d4d8f0}
+body.light .ctitle{color:#1a1d35}
+body.light .ctag{background:#eceef8;color:#5c6080}
+body.light .leg{color:#5c6080}
+body.light .filters .f-btn{border-color:#d4d8f0;color:#5c6080}
+body.light .htable th{color:#5c6080;border-color:#d4d8f0}
+body.light .htable td{color:#1a1d35;border-color:#d4d8f0}
+body.light .pbar-wrap{background:#eceef8}
+body.light .toggle-btn{background:#eceef8;border-color:#d4d8f0;color:#5c6080}
+body.light .dash-sub{color:#5c6080}
+footer{text-align:center;margin-top:24px;font-size:12px;color:#5c6080}
+@media(max-width:768px){.metrics{grid-template-columns:repeat(2,1fr)}.charts-row,.charts-row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body id="bd">
+<div class="dash">
+  <div class="top-bar">
+    <div>
+      <div class="dash-title">HR Analytics Dashboard</div>
+      <div class="dash-sub">Q1–Q2 2025 &nbsp;·&nbsp; All Departments &nbsp;|&nbsp; By Warisha Jamal</div>
+    </div>
+    <button class="toggle-btn" onclick="toggleTheme()" id="themeBtn">☀ Light mode</button>
+  </div>
+  <div class="filters">
+    <button class="f-btn active" onclick="setDept(this,'all')">All departments</button>
+    <button class="f-btn" onclick="setDept(this,'engineering')">Engineering</button>
+    <button class="f-btn" onclick="setDept(this,'sales')">Sales</button>
+    <button class="f-btn" onclick="setDept(this,'hr')">HR</button>
+    <button class="f-btn" onclick="setDept(this,'marketing')">Marketing</button>
+  </div>
+  <div class="metrics">
+    <div class="mcard c1"><div class="mlabel">Total employees</div><div class="mval" id="m1">1,248</div><div class="mdelta green" id="d1">+34 this quarter</div></div>
+    <div class="mcard c2"><div class="mlabel">Attrition rate</div><div class="mval" id="m2">8.3%</div><div class="mdelta green" id="d2">-1.2% vs last quarter</div></div>
+    <div class="mcard c3"><div class="mlabel">Avg satisfaction</div><div class="mval" id="m3">4.1/5</div><div class="mdelta green" id="d3">+0.3 vs last quarter</div></div>
+    <div class="mcard c4"><div class="mlabel">Open positions</div><div class="mval" id="m4">67</div><div class="mdelta red" id="d4">+12 this month</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="ccard">
+      <div class="ctitle">Monthly headcount trend <span class="ctag">6 months</span></div>
+      <div class="legend">
+        <span class="leg"><span class="legdot" style="background:#7c6af7"></span>Joined</span>
+        <span class="leg"><span class="legdot" style="background:#f97b6b"></span>Left</span>
+        <span class="leg"><span class="legdot" style="background:#5dcaa5"></span>Net growth</span>
+      </div>
+      <div style="position:relative;height:200px"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">Dept. headcount <span class="ctag">Live</span></div>
+      <div style="position:relative;height:220px"><canvas id="deptChart"></canvas></div>
+    </div>
+  </div>
+  <div class="charts-row2">
+    <div class="ccard">
+      <div class="ctitle">Attrition reasons</div>
+      <div class="legend">
+        <span class="leg"><span class="legdot" style="background:#7c6af7"></span>Better offer 38%</span>
+        <span class="leg"><span class="legdot" style="background:#f97b6b"></span>Relocation 22%</span>
+        <span class="leg"><span class="legdot" style="background:#f4c775"></span>Culture fit 18%</span>
+        <span class="leg"><span class="legdot" style="background:#5ba3f5"></span>Growth 14%</span>
+        <span class="leg"><span class="legdot" style="background:#5dcaa5"></span>Other 8%</span>
+      </div>
+      <div style="position:relative;height:150px"><canvas id="attrChart"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">Satisfaction by dept.</div>
+      <div style="position:relative;height:175px"><canvas id="satChart"></canvas></div>
+    </div>
+    <div class="ccard">
+      <div class="ctitle">Age distribution</div>
+      <div style="position:relative;height:175px"><canvas id="ageChart"></canvas></div>
+    </div>
+  </div>
+  <div class="ccard-full">
+    <div class="ctitle">Employee records <span class="ctag">Recent hires</span></div>
+    <table class="htable">
+      <thead><tr><th>Name</th><th>Dept.</th><th>Role</th><th>Status</th><th>Tenure</th><th>Performance</th></tr></thead>
+      <tbody>
+        <tr><td>Ayesha Malik</td><td>Engineering</td><td>Sr. Data Analyst</td><td><span class="badge active">Active</span></td><td>2.4 yrs</td><td><div class="pbar-wrap"><div class="pbar-fill" style="width:92%;background:#7c6af7"></div></div> <span style="font-size:11px;color:#7c6af7">92</span></td></tr>
+        <tr><td>Bilal Ahmed</td><td>Sales</td><td>Account Manager</td><td><span class="badge active">Active</span></td><td>1.1 yrs</td><td><div class="pbar-wrap"><div class="pbar-fill" style="width:78%;background:#5dcaa5"></div></div> <span style="font-size:11px;color:#5dcaa5">78</span></td></tr>
+        <tr><td>Sara Naqvi</td><td>HR</td><td>HR Business Partner</td><td><span class="badge remote">Remote</span></td><td>3.8 yrs</td><td><div class="pbar-wrap"><div class="pbar-fill" style="width:88%;background:#7c6af7"></div></div> <span style="font-size:11px;color:#7c6af7">88</span></td></tr>
+        <tr><td>Hamza Qureshi</td><td>Marketing</td><td>Content Strategist</td><td><span class="badge leave">On leave</span></td><td>0.7 yrs</td><td><div class="pbar-wrap"><div class="pbar-fill" style="width:65%;background:#f4c775"></div></div> <span style="font-size:11px;color:#f4c775">65</span></td></tr>
+        <tr><td>Zara Khan</td><td>Engineering</td><td>ML Engineer</td><td><span class="badge active">Active</span></td><td>1.9 yrs</td><td><div class="pbar-wrap"><div class="pbar-fill" style="width:95%;background:#5dcaa5"></div></div> <span style="font-size:11px;color:#5dcaa5">95</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <footer>HR Analytics Dashboard &nbsp;·&nbsp; Built by Warisha Jamal &nbsp;·&nbsp; Data Analytics Portfolio Project</footer>
+</div>
+<script>
+let isDark=true;
+const deptData={
+  all:{m1:'1,248',d1:'+34 this quarter',c1:'green',m2:'8.3%',d2:'-1.2% vs last quarter',c2:'green',m3:'4.1/5',d3:'+0.3 vs last quarter',c3:'green',m4:'67',d4:'+12 this month',c4:'red'},
+  engineering:{m1:'312',d1:'+18 this quarter',c1:'green',m2:'6.1%',d2:'-0.8% vs last quarter',c2:'green',m3:'4.4/5',d3:'+0.5 vs last quarter',c3:'green',m4:'28',d4:'+8 this month',c4:'red'},
+  sales:{m1:'198',d1:'+5 this quarter',c1:'green',m2:'12.4%',d2:'+1.1% vs last quarter',c2:'red',m3:'3.8/5',d3:'-0.2 vs last quarter',c3:'red',m4:'14',d4:'+2 this month',c4:'red'},
+  hr:{m1:'64',d1:'+2 this quarter',c1:'green',m2:'5.2%',d2:'-0.4% vs last quarter',c2:'green',m3:'4.3/5',d3:'+0.1 vs last quarter',c3:'green',m4:'6',d4:'No change',c4:'yellow'},
+  marketing:{m1:'142',d1:'+9 this quarter',c1:'green',m2:'9.7%',d2:'+0.6% vs last quarter',c2:'red',m3:'4.0/5',d3:'+0.2 vs last quarter',c3:'green',m4:'19',d4:'+3 this month',c4:'red'}
+};
+function setDept(btn,key){
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d=deptData[key];
+  ['1','2','3','4'].forEach(i=>{
+    document.getElementById('m'+i).textContent=d['m'+i];
+    const el=document.getElementById('d'+i);
+    el.textContent=d['d'+i];
+    el.className='mdelta '+d['c'+i];
+  });
+}
+function toggleTheme(){
+  isDark=!isDark;
+  document.getElementById('bd').classList.toggle('light',!isDark);
+  document.getElementById('themeBtn').textContent=isDark?'☀ Light mode':'☾ Dark mode';
+  const gc=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.07)';
+  const tc=isDark?'#9196b5':'#5c6080';
+  Object.values(charts).forEach(c=>{
+    if(c.options.scales){
+      ['x','y','r'].forEach(ax=>{
+        if(c.options.scales[ax]){
+          if(c.options.scales[ax].ticks)c.options.scales[ax].ticks.color=tc;
+          if(c.options.scales[ax].grid)c.options.scales[ax].grid.color=gc;
+          if(c.options.scales[ax].pointLabels)c.options.scales[ax].pointLabels.color=tc;
+          if(c.options.scales[ax].angleLines)c.options.scales[ax].angleLines.color=gc;
+        }
+      });
+    }
+    c.update();
+  });
+}
+const months=['Jan','Feb','Mar','Apr','May','Jun'];
+const gc='rgba(255,255,255,0.06)',tc='#9196b5';
+const charts={};
+charts.trend=new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:months,datasets:[
+  {label:'Joined',data:[42,38,55,47,61,53],borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,0.1)',tension:.4,pointRadius:4,fill:true,borderDash:[]},
+  {label:'Left',data:[28,31,24,38,29,34],borderColor:'#f97b6b',backgroundColor:'rgba(249,123,107,0.08)',tension:.4,pointRadius:4,fill:true,borderDash:[5,3]},
+  {label:'Net',data:[14,7,31,9,32,19],borderColor:'#5dcaa5',backgroundColor:'rgba(93,202,165,0.08)',tension:.4,pointRadius:4,fill:false,borderDash:[3,3]}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:11}},grid:{display:false}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+charts.dept=new Chart(document.getElementById('deptChart'),{type:'bar',data:{labels:['Engineering','Sales','Marketing','HR','Finance','Ops'],datasets:[{data:[312,198,142,64,118,214],backgroundColor:['#7c6af7','#f97b6b','#f4c775','#5dcaa5','#5ba3f5','#f97b6b'],borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:10}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10}},grid:{display:false}}}}});
+charts.attr=new Chart(document.getElementById('attrChart'),{type:'doughnut',data:{labels:['Better offer','Relocation','Culture fit','Growth','Other'],datasets:[{data:[38,22,18,14,8],backgroundColor:['#7c6af7','#f97b6b','#f4c775','#5ba3f5','#5dcaa5'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
+charts.sat=new Chart(document.getElementById('satChart'),{type:'radar',data:{labels:['Eng','Sales','HR','Mktg','Fin','Ops'],datasets:[
+  {label:'Q1',data:[4.4,3.7,4.2,3.9,4.1,3.8],borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,0.15)',pointBackgroundColor:'#7c6af7'},
+  {label:'Q2',data:[4.4,3.8,4.3,4.0,4.2,4.0],borderColor:'#5dcaa5',backgroundColor:'rgba(93,202,165,0.12)',pointBackgroundColor:'#5dcaa5',borderDash:[4,2]}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:3,max:5,ticks:{color:tc,font:{size:10},stepSize:.5,backdropColor:'transparent'},grid:{color:gc},angleLines:{color:gc},pointLabels:{color:tc,font:{size:11}}}}}});
+charts.age=new Chart(document.getElementById('ageChart'),{type:'bar',data:{labels:['18-24','25-30','31-35','36-40','41-45','46+'],datasets:[{data:[142,318,276,224,168,120],backgroundColor:['#5ba3f5','#7c6af7','#7c6af7','#5dcaa5','#5dcaa5','#888780'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:10}},grid:{display:false}},y:{ticks:{color:tc,font:{size:10}},grid:{color:gc}}}}});
+</script>
+</body>
+</html>
